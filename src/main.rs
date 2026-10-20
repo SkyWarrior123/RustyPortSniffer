@@ -44,3 +44,18 @@ fn start_port_guard(input: &u16) -> bool {
 fn end_port_guard(input: &u16) -> bool {
     *input <= MAX
 }
+
+// Scan the port.
+async fn scan(tx: Sender<u16>, start_port: u16, addr: IpAddr) {
+    // Attempts Connects to the address and the given port.
+    match TcpStream::connect(format!("{}:{}", addr, start_port)).await {
+        // If the connection is successful, print out a . and then pass the port through the channel.
+        Ok(_) => {
+            print!(".");
+            io::stdout().flush().unwrap();
+            tx.send(start_port).unwrap();
+        }
+        // If the connection is unsuccessful, do nothing. Means port is not open.
+        Err(_) => {}
+    }
+}
