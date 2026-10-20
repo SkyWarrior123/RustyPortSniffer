@@ -59,3 +59,34 @@ async fn scan(tx: Sender<u16>, start_port: u16, addr: IpAddr) {
         Err(_) => {}
     }
 }
+
+#[tokio::main]
+async fn main() {
+    // collect the arguments.
+    let opts = arguments().run();
+    // Initialize the channel.
+    let (tx, rx) = channel();
+    // Iterate through all of the ports (based on user input) so that we can spawn a single task for each.
+    // (Much faster than before because it uses green threads instead of OS threads.)
+    for i in opts.start_port..opts.end_port {
+        let tx = tx.clone();
+
+        task::spawn(async move { scan(tx, i, opts.address).await });
+    }
+    // Create the vector for all of the outputs.
+    let mut out = vec![];
+    // Drop the tx clones.
+    drop(tx);
+    // Wait for all of the outputs to finish and push them into the vector.
+
+    for p in rx {
+        out.push(p);
+    }
+
+    println!("");
+    out.sort();
+    for v in out {
+        // Iterate through the outputs and print them out as being open.
+        println!("{} is open", v);
+    }
+}
